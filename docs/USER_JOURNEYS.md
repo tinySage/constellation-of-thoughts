@@ -21,7 +21,7 @@ Priya has a large archive and is interested in recurring topics, distant connect
 - Explain generated results with visible source entries and methods.
 - Provide keyboard equivalents for graph hover-only interactions.
 - Avoid empty-state language that implies the user has a problem; explain what data is needed.
-- Offer recovery paths for destructive or failed operations.
+- Offer recovery paths for recoverable failures, such as failed saves, processing retries, and canceled non-destructive actions. Do not imply recovery or undo after the user confirms an MVP permanent deletion.
 
 ## 3. Registration and first login
 
@@ -79,7 +79,7 @@ Priya has a large archive and is interested in recurring topics, distant connect
 3. User confirms; server authorizes by ownership and performs an explicit permanent deletion.
 4. UI removes the entry immediately and shows cleanup status if dependent deletion continues asynchronously; MVP provides no undo or recoverable-trash state.
 
-**Friction and mitigation:** Do not make deletion easy to trigger accidentally. The confirmation must state that MVP deletion is irreversible. A failed cleanup must be visible and retryable; source content must be inaccessible immediately even while dependent cleanup continues.
+**Friction and mitigation:** Do not make deletion easy to trigger accidentally. The confirmation must state that MVP deletion is irreversible. A failed cleanup is an operational failure that must be visible and retryable, but it does not restore or expose the deleted entry; source content must be inaccessible immediately while dependent cleanup continues.
 
 ## 9. Exporting journal data
 
@@ -94,10 +94,10 @@ Priya has a large archive and is interested in recurring topics, distant connect
 
 1. User opens account deletion, reads the consequences and retention window.
 2. User re-authenticates and types a confirmation phrase.
-3. Server disables access, queues deletion of primary and derived data, and invalidates sessions.
+3. Server disables access, invalidates sessions, and queues deletion of all account-owned primary and derived data, including graph projection records, generation metadata, nodes, edges, embeddings, manual connections, and related derived data.
 4. UI shows completion or a clearly stated pending deletion status.
 
-**Friction and mitigation:** Explain backups and legal/operational retention. Ensure deletion jobs are idempotent and do not leave searchable embeddings, graph data, exports, or insight caches.
+**Friction and mitigation:** Explain backups and legal/operational retention. Ensure account-deletion jobs are idempotent and do not leave searchable embeddings, graph data, exports, or insight caches. Individual entry deletion cleans up affected records without removing projection generations that still serve other entries.
 
 ## 11. Usability and accessibility checklist
 
@@ -107,5 +107,5 @@ Priya has a large archive and is interested in recurring topics, distant connect
 - Color is not the sole distinction between semantic and manual connections.
 - Reduced-motion mode disables force simulation and decorative transitions.
 - Date, tag, and threshold filters have accessible names and reset controls.
-- Errors identify the action, consequence, and recovery path.
+- Errors identify the action, consequence, and recovery path when recovery is possible; destructive confirmation errors instead explain that permanent deletion must be retried or escalated, not undone.
 - User can complete all critical journeys without drag, hover, or precise pointer input.

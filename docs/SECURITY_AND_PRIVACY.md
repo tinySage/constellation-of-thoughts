@@ -67,8 +67,8 @@ Support tooling should use least privilege, time-limited access, explicit audit 
 - Encrypt data in transit and at rest, including managed database backups and temporary exports.
 - Define backup retention, region, provider access, and restoration testing before public launch. The preliminary retention schedule is specified in `PHASE_0_ARCHITECTURE_REVIEW.md` and remains subject to product/legal approval.
 - Explain that deletion from live systems may be followed by a limited backup retention window; do not promise instantaneous erasure if technically false.
-- Entry and account deletion should be explicit and permanent in MVP: remove source content from live reads immediately, revoke relevant access, remove primary and derived records through idempotent jobs, expire exports, and track completion status without retaining content. MVP provides no recoverable trash or undo.
-- Remove stale embeddings, graph edges, insight caches, search indexes, and job payloads when their source is deleted.
+- Individual entry deletion should be explicit and permanent in MVP: remove the source content and its stable graph node from live reads immediately, revoke relevant access, and remove the entry's primary and derived records through idempotent jobs. Preserve projection records and generation metadata when they still serve other entries. Account deletion must remove all account-owned primary and derived records, including graph projection records and generation metadata. Expire exports and track completion status without retaining content. MVP provides no recoverable trash or undo. Failed or interrupted cleanup must never restore or expose deleted content.
+- Remove embeddings and semantic graph edges referencing deleted entries across all affected current, staging, retired, and historical projection generations, along with manual connections, insight caches, search indexes, and job payloads. Cleanup must be retryable and must not alter the current projection in a way that exposes deleted content.
 - Set explicit retention for audit/security events and minimize identifiers.
 
 ## 8. Privacy controls and user rights

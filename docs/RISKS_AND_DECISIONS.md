@@ -12,12 +12,12 @@
 | 6 | Cross-user access exposes private entries or derived data. | Medium | Critical | Enforce ownership at route/service/repository/database layers, immutable job scopes, two-user authorization tests, threat modeling, consider row-level security. |
 | 7 | Data loss occurs during autosave, conflicts, deletion, or provider failure. | Medium | Critical | Version checks, durable save states, draft recovery, transactional writes, backups, restore drills, idempotent deletion and clear failure UI. |
 | 8 | Vector/full-text queries become expensive as archives grow. | Medium | High | Owner/model-aware indexes, ANN only after measurement, pagination, bounded candidates, query plans, archive-size load tests. |
-| 9 | Graph edges become inconsistent after edits or model changes. | Medium | High | Revision/model metadata, stale status, idempotent targeted/full rebuilds, deterministic policy, visible processing state. |
+| 9 | Graph edges become inconsistent after edits or model changes. | Medium | High | Revision/model metadata, new staging generations, validation before activation, atomic cutover, current-generation-only reads, idempotent targeted/full rebuilds, deterministic policy, visible processing state. |
 | 10 | Hosting and inference costs exceed a student-led budget. | Medium | High | Use a modular monolith, pgvector initially, infrastructure-local inference, quotas, bounded processing, cost dashboards, explicit scale triggers before adding services. |
 | 11 | Insights are interpreted as diagnoses or definitive personal claims. | Medium | Critical | Qualified language, evidence/source links, minimum sample sizes, product review, prohibit emotional/medical/personality conclusions, user dismissal controls. |
 | 12 | OAuth, sharing, or exports introduce accidental disclosure. | Medium | High | Defer sharing/OAuth, re-authenticate sensitive actions, use scoped expiring exports, threat-model each new trust boundary. |
 | 13 | Model or dependency license/availability changes. | Low/Medium | High | Record licenses, pin versions, maintain a model abstraction, keep a fallback evaluated model, review supply chain before releases. |
-| 14 | Background jobs are duplicated, stuck, or execute after deletion. | Medium | High | Idempotency keys, leases, retries/dead-letter status, execution-time ownership/existence checks, cancellation and monitoring. |
+| 14 | Background jobs are duplicated, stuck, or execute after deletion. | Medium | High | Idempotency keys, leases, retries/dead-letter status, execution-time ownership/existence checks, cancellation and monitoring; generation-aware cleanup removes affected entry data across current, staging, retired, and historical projections and removes all account-owned projection data on account deletion. |
 | 15 | Accessibility suffers because graph interactions depend on pointer/animation. | Medium | High | Keyboard graph commands, focusable node list/preview, reduced motion, non-color cues, automated and manual accessibility testing. |
 
 ## 2. Important architectural decisions
@@ -58,11 +58,11 @@
 2. **Email verification:** Require verification before journal access, or launch with password recovery plus later verification?
 3. **Exact embedding model:** Which model, license, dimension, language coverage, and hardware budget meet the initial evaluation set?
 4. **Graph policy:** What default threshold, top-k, reciprocal-neighbor rule, and minimum cluster size perform acceptably on representative data?
-5. **Deletion retention:** Approve the preliminary retention schedule in `PHASE_0_ARCHITECTURE_REVIEW.md` for recoverable trash, backups, audit events, and export artifacts.
+5. **Deletion and retention:** Approve backup retention and deletion disclosure, audit-event and export-artifact retention, and any future P1 recoverable-trash window. MVP entry and account deletion remain explicit, permanent, and irreversible with no trash, restore, or undo.
 6. **Hosting and region:** Which provider/region offers adequate database backups, private networking, worker resources, and cost predictability?
 7. **Full-text/semantic search scope:** Keep keyword search P0 and semantic archive search P1 until embedding quality and query cost are measured.
 8. **Rich text:** Is plain text/Markdown sufficient for MVP, or is sanitized rich text required?
-9. **Graph history:** Should users see historical graph snapshots, or only the current projection?
+9. **Graph history retention:** How long should retired or historical projection generations be retained for operational purposes, and should any historical snapshots ever be user-visible? Ordinary graph reads expose only the current projection.
 10. **Privacy/legal readiness:** Which jurisdictions and data-subject obligations apply before public launch, and who approves privacy copy?
 
 ## 4. Review checklist before Phase 1

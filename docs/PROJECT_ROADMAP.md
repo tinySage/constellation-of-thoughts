@@ -7,7 +7,7 @@ Work in vertical slices with security and accessibility present from the first u
 ## Phase 0 — Product requirements and architecture
 
 **Objectives:** Establish scope, personas, technical decisions, privacy posture, data model, risks, and release boundaries.  
-**Tasks:** Create and review the eight planning documents; identify unresolved decisions.  
+**Tasks:** Create and review the Phase 0 planning documents; identify unresolved decisions.
 **Dependencies:** None.  
 **Deliverables:** Approved Phase 0 documentation.  
 **Acceptance criteria:** All product modules, MVP boundaries, data flow, isolation, testing, risks, and open questions are documented; no application code is created.
@@ -39,7 +39,7 @@ Work in vertical slices with security and accessibility present from the first u
 ## Phase 4 — Journal functionality
 
 **Objectives:** Deliver trustworthy writing and archive basics.  
-**Tasks:** Entry CRUD, autosave/drafts, revision conflicts, tags, archive search/filter/sort, deletion states, timeline shell.  
+**Tasks:** Entry CRUD, autosave/drafts, revision conflicts, tags, archive search/filter/sort, explicit permanent entry deletion with idempotent cleanup of affected dependent data, account deletion with account-wide cleanup, deletion states, and timeline shell.
 **Dependencies:** Phase 2 API contracts; Phase 3 UI foundation.  
 **Deliverables:** End-to-end private journal workflow.  
 **Acceptance criteria:** Save failures are explicit, edits do not silently overwrite, unauthorized IDs fail, and user can find/delete/export-ready entries.
@@ -55,7 +55,7 @@ Work in vertical slices with security and accessibility present from the first u
 ## Phase 6 — NLP and semantic embeddings
 
 **Objectives:** Generate versioned infrastructure-local embeddings safely and measurably.  
-**Tasks:** Select/evaluate model, worker lifecycle, idempotency, retries, memory limits, status UI, model metadata, pgvector indexes.  
+**Tasks:** Evaluate candidate models and obtain approval for the final model selection, then implement worker lifecycle, idempotency, retries, memory limits, status UI, model metadata, and pgvector indexes.
 **Dependencies:** Phase 2 jobs/database; Phase 5 ownership.  
 **Deliverables:** New/edit processing pipeline and evaluation report.  
 **Acceptance criteria:** Processing is asynchronous, retryable, owner-scoped, revision-aware, and does not call external AI services by default.
@@ -63,10 +63,10 @@ Work in vertical slices with security and accessibility present from the first u
 ## Phase 7 — Graph construction
 
 **Objectives:** Turn embeddings into explainable, bounded relationships.  
-**Tasks:** Candidate retrieval, threshold/top-k policy, edge versioning, manual connections, clusters, rebuild tools, graph API.  
+**Tasks:** Candidate retrieval, stable one-per-entry `GraphNode` identity, projection-generation creation, threshold/top-k policy, generation-scoped edge versioning, staging and validation, atomic activation, independent manual connections, clusters, rebuild tools, and graph API. Historical-generation retention remains an unresolved policy decision.
 **Dependencies:** Phase 6 embeddings; Phase 5 API/security.  
 **Deliverables:** Deterministic per-user graph projection.  
-**Acceptance criteria:** Scores/policy/model are traceable; stale edges are handled; cross-user and self-edge tests pass.
+**Acceptance criteria:** Scores/policy/model are traceable; stable nodes are reused across rebuilds; replacements are staged and validated, then atomically activated with the predecessor generation retired only after successful activation; ordinary reads expose only the current projection; failed builds leave it unchanged; manual connections remain independent from semantic edges; projection-generation replacement and deletion cleanup are handled; cross-user and self-edge tests pass.
 
 ## Phase 8 — Interactive constellation visualization
 
@@ -95,7 +95,7 @@ Work in vertical slices with security and accessibility present from the first u
 ## Phase 11 — Testing, security, and optimization
 
 **Objectives:** Prepare for a trustworthy public beta.  
-**Tasks:** E2E, performance/load, threat modeling, dependency scanning, accessibility audit, backup restore, deletion verification, query tuning, incident runbook.  
+**Tasks:** E2E, performance/load, threat modeling, dependency scanning, accessibility audit, backup restore, verification of permanent individual-entry cleanup and account-wide deletion cleanup, query tuning, incident runbook.
 **Dependencies:** All functional phases.  
 **Deliverables:** Release candidate and risk register update.  
 **Acceptance criteria:** P0 acceptance suite passes; measured thresholds and known limitations are documented; no unresolved critical/high security issue.
@@ -103,7 +103,7 @@ Work in vertical slices with security and accessibility present from the first u
 ## Phase 12 — Deployment and documentation
 
 **Objectives:** Operate the product safely.  
-**Tasks:** Staging/production deployment, secrets, domains/HTTPS, monitoring/alerts, migrations, backups, privacy/terms, support and rollback docs.  
+**Tasks:** Staging/production deployment after hosting/provider, backup-retention, and privacy approvals, secrets, domains/HTTPS, monitoring/alerts, migrations, backups, privacy/terms, support and rollback docs.
 **Dependencies:** Phase 11 approval.  
 **Deliverables:** Production MVP and operator documentation.  
 **Acceptance criteria:** Deployment, rollback, restore, deletion, and incident procedures are tested; synthetic staging is isolated from production.
@@ -112,6 +112,6 @@ Work in vertical slices with security and accessibility present from the first u
 
 - **Architecture gate:** Phase 0 approved before implementation.
 - **Private-alpha gate:** Phases 1–5 complete with two-user isolation tests.
-- **Semantic-alpha gate:** Phases 6–8 complete with model/graph evaluation.
+- **Semantic-alpha gate:** Phases 6–8 complete with approved model/graph evaluation results and graph lifecycle tests.
 - **Feature-complete gate:** Phases 9–10 complete with privacy/content review.
 - **Public-beta gate:** Phases 11–12 complete with security, accessibility, performance, backup, and deletion evidence.

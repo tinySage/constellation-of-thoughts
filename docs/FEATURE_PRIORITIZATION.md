@@ -13,10 +13,10 @@
 | Archive | Keyword search, date/tag filters, sorting, entry management, empty/error states. |
 | Timeline | Daily/monthly/yearly navigation linked to entries. |
 | Infrastructure-local embeddings | Versioned asynchronous Sentence Transformer processing in controlled application infrastructure, with visible status. |
-| Personal constellation | Per-user nodes, thresholded semantic edges, pan/zoom/select, preview, filter, disconnected nodes. |
-| Manual connections | User-created links clearly distinct from generated semantic links. |
+| Personal constellation | Exactly one stable `GraphNode` per active `(user_id, entry_id)`, thresholded semantic edges in versioned projection generations, pan/zoom/select, preview, filter, disconnected nodes, and staging/validation/atomic activation with ordinary reads limited to the current generation. |
+| Manual connections | User-created links remain independent from generated semantic links, may coexist for the same entries, remain unchanged by semantic recomputation, and are clearly distinct in the UI. |
 | Basic observatory | Activity counts, recurring terms, and simple topic/connection descriptions with evidence. |
-| Export and deletion | Scoped export, account deletion, dependent-data cleanup, retention disclosure. |
+| Export and deletion | Scoped export, explicit permanent and irreversible entry/account deletion with no trash, restore, or undo, dependent-data cleanup across affected records for entry deletion, and removal of all account-owned graph projection data for account deletion. |
 | Security/accessibility baseline | HTTPS deployment, secure cookies, rate limiting, validation, audit events without journal bodies, keyboard and reduced-motion support. |
 
 ### Explicit MVP limits

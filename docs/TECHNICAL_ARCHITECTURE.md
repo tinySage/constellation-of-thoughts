@@ -65,28 +65,28 @@ Authorization is deny-by-default and enforced at the route, service, repository,
 3. The API emits an idempotent processing job keyed by entry revision and model version.
 4. Worker loads only the authorized entry revision, normalizes model input in memory, and generates a vector in the application's controlled infrastructure. This is infrastructure-local inference; it is not inference in the user's browser or device.
 5. Worker stores the embedding with model metadata and marks it ready.
-6. Worker retrieves nearest candidates constrained to the same user and compatible model/version, applies threshold/top-k rules, and writes edges into a versioned graph projection over the entries' stable `GraphNode` identities.
-7. Worker atomically marks the new model/policy projection current, then retires the prior semantic edge projection according to retention policy and refreshes affected insights. `GraphNode` rows are not duplicated for model upgrades.
+6. Worker retrieves nearest candidates constrained to the same user and compatible model/version, applies threshold/top-k rules, and writes edges into a new staging generation of the logical graph projection over the entries' stable `GraphNode` identities.
+7. Worker validates the staging generation for ownership, endpoint compatibility, expected node coverage, edge uniqueness, and model/policy metadata. In one short transaction, it activates the validated generation and records the previous current generation as retired. Until activation succeeds, readers continue using the previous current projection. `GraphNode` rows are not duplicated for model or graph-policy upgrades.
 8. Client polls or receives a status update and requests a scoped constellation snapshot/neighborhood.
 9. D3 renders nodes and edges through an adapter that can switch to aggregation or focus mode.
 
 **New entries:** searchable immediately; graph processing is eventual and visible.
 
-**Edits:** create a new revision or increment a revision number; old vector/edges remain marked stale until replacement succeeds, preventing accidental disappearance.
+**Edits:** create a new revision or increment a revision number; the existing current projection remains unchanged and readable until a validated replacement generation is atomically activated, after which the previous generation is retired.
 
-**Deletes:** an explicit permanent-delete request removes the entry from live reads in the initiating transaction, enqueues idempotent cleanup of its stable node, embeddings, semantic edges, manual connections, insights, search projections, jobs, and export references, and provides no MVP undo or recovery path.
+**Deletes:** an explicit permanent-delete request immediately removes the entry and its stable `GraphNode` from ordinary reads in the initiating transaction, so ordinary graph reads cannot expose the deleted entry or any semantic edge referencing that node. It enqueues idempotent cleanup of the node's embeddings, semantic edges across all affected current, staging, retired, and historical projection generations, manual connections, insights, search projections, jobs, and export references. Cleanup is safe to retry after worker interruption; failed or interrupted cleanup never restores or exposes deleted content, and MVP deletion remains explicit, permanent, and irreversible with no undo or recovery path.
 
 **Failures:** retain the source entry, expose processing failure and retry, log a job ID/error class without body content, and alert on repeated failures.
 
 **Repeated processing:** unique job keys and revision/model metadata make retries safe.
 
-**Recalculation:** support targeted recomputation for an edited entry and a controlled full-user/model-version rebuild operation.
+**Recalculation:** support targeted recomputation for an edited entry and a controlled full-user/model-version rebuild operation. Embedding changes and model or graph-policy changes create a new projection generation rather than mutating current `GraphEdge` records. Rebuilds stage and validate the replacement, then atomically activate it; failed or interrupted builds leave the current projection unchanged.
 
 ## 7. Embedding and graph construction
 
 Start with a compact, well-supported Sentence Transformer suitable for English MVP text. Candidate models and a reproducible selection method are documented in `PHASE_0_ARCHITECTURE_REVIEW.md`; no model is selected until that evaluation is complete. Record dimensions, verified license, memory footprint, latency, and known limitations. Normalize vectors and use cosine distance/similarity. Do not combine title/body without documenting the weighting; a simple title-plus-body input with a separator is a reasonable starting point.
 
-For each ready embedding, use pgvector nearest-neighbor search within the same user and compatible model version. Apply the preliminary threshold, top-k, reciprocal-neighbor, uniqueness, and version policy in `PHASE_0_ARCHITECTURE_REVIEW.md`; tune it only against the evaluation set and graph usability measurements. Store score, method, model version, graph-policy version, and status on semantic edges. Manual connections are separate records and may coexist with a semantic edge for the same pair; automated recomputation never creates, updates, or deletes a manual connection. The graph API returns relationship type explicitly so the UI can render semantic and manual indicators, explanations, and removal actions independently.
+For each ready embedding, use pgvector nearest-neighbor search within the same user and compatible model version. Apply the preliminary threshold, top-k, reciprocal-neighbor, uniqueness, and version policy in `PHASE_0_ARCHITECTURE_REVIEW.md`; tune it only against the evaluation set and graph usability measurements. Store `projection_generation_id`, score, method, model version, graph-policy version, and status on semantic edges. Edge uniqueness is scoped to a projection generation and canonical endpoint pair, allowing a staging replacement and its predecessor to coexist safely. Ordinary graph reads return only edges from the current projection generation. Manual connections are separate records and may coexist with a semantic edge for the same pair; they have no shared uniqueness constraint with semantic edges, and automated recomputation never creates, updates, or deletes a manual connection. The graph API returns relationship type explicitly so the UI can render semantic and manual indicators, explanations, and removal actions independently.
 
 Clusters should be derived from the active semantic subgraph only after edge policy is applied. Use a simple connected-component or community method for MVP, with minimum-size rules and stable labels based on representative terms. “Cluster” means graph grouping, not a psychological category.
 

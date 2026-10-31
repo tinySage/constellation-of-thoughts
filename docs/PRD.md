@@ -74,11 +74,11 @@ The product must be intelligent but non-diagnostic, visually immersive but calm,
 
 ### C. Constellation
 
-- Represent each eligible journal entry as one user-owned node.
-- Draw weighted semantic edges only between entries owned by the same user and passing the configured similarity policy.
+- Represent each active journal entry with exactly one stable `GraphNode` identified by `(user_id, entry_id)`. Embedding model and graph-policy upgrades reuse that node and never create duplicates.
+- Draw weighted semantic edges only between entries owned by the same user and passing the configured similarity policy. Semantic edges belong to a versioned graph projection generation; replacements are staged, validated, and atomically activated, and ordinary graph reads expose only the current generation.
 - Support pan, zoom, fit-to-view, node selection, hover/focus preview, keyboard selection, and navigation to the full entry.
 - Offer date and tag filters, similarity threshold controls, cluster highlighting, and a disconnected-node mode.
-- Distinguish semantic edges from user-created manual connections visually and accessibly. Both relationship types may coexist for the same two entries: the UI shows separate relationship indicators and explanations rather than merging or hiding either one.
+- Distinguish semantic edges from user-created manual connections visually and accessibly. Both independent relationship types may coexist for the same two entries, with no shared uniqueness constraint: the UI shows separate relationship indicators and explanations rather than merging or hiding either one. Semantic recomputation never modifies or deletes a manual connection; authorized permanent deletion may clean up both.
 - Show an explanation panel containing the related entries, score, model/version, and threshold; do not present similarity as fact about the author.
 - Use progressive loading, aggregation, or focus neighborhoods for large graphs. Never render an unbounded 10,000-node force simulation in the browser.
 - Default to a stable, deterministic layout where possible so the same archive does not move unpredictably on each visit.
@@ -90,7 +90,7 @@ The product must be intelligent but non-diagnostic, visually immersive but calm,
 - Store model name, model version, dimensions, source revision, status, and generated timestamp.
 - Use cosine similarity on normalized vectors; choose a default threshold through evaluation, not intuition alone.
 - Generate candidate neighbors with pgvector approximate nearest-neighbor search, then apply threshold, per-entry/user bounds, and deterministic tie-breaking.
-- Reprocess edited entries asynchronously and replace stale relationships only after the new embedding succeeds.
+- Reprocess edited entries asynchronously by creating and validating a new graph projection generation rather than mutating current `GraphEdge` records; activate it atomically only after the new embedding succeeds.
 - Make processing idempotent using an entry revision and model version key.
 - Support future multilingual models behind a model registry and embedding dimension/version boundary.
 - Never infer depression, trauma, personality, intent, or emotional state; similarity is topical/semantic proximity only.
@@ -146,8 +146,8 @@ The MVP excludes public sharing, social features, OAuth, real-time collaboration
 ## 8. Acceptance criteria
 
 - A new account can create and retrieve only its own entry.
-- Editing an entry produces a new processing revision and removes stale semantic relationships.
-- Deleting an entry permanently removes its live source and dependent graph/embedding data through idempotent cleanup; MVP provides no trash or undo.
+- Editing an entry produces a new processing revision and replaces affected semantic relationships through a new projection generation that is staged, validated, and atomically activated; the predecessor generation is retired only after successful activation.
+- Deleting an entry immediately removes its live source and stable `GraphNode` from ordinary reads, including graph reads, then permanently removes dependent embeddings, semantic edges across affected projection generations, manual connections, and related derived data through idempotent cleanup; failed cleanup must never restore or expose deleted content. MVP provides no trash, restore, or undo.
 - A graph request cannot return another user's nodes, edges, tags, or entry previews even when IDs are guessed.
 - Empty, failed, and large-archive states are usable and explained.
 - Documentation, API behavior, and UI language consistently distinguish semantic similarity from emotional or psychological interpretation.

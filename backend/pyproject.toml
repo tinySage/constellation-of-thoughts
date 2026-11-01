@@ -1,0 +1,39 @@
+[project]
+name = "constellation-of-thoughts-backend"
+version = "0.1.0"
+description = "FastAPI backend for Constellation of Thoughts."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.121,<1.0",
+    "uvicorn>=0.38,<1.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28,<1.0",
+    "pyright>=1.1.390,<2.0",
+    "pytest>=8.4,<9.0",
+    "ruff>=0.14,<1.0",
+]
+
+[tool.pyright]
+include = ["app", "tests"]
+typeCheckingMode = "strict"
+venvPath = "."
+venv = ".venv"
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
